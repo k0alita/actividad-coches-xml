@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<!--
+  Fichero de ejemplo para la base de datos de un concesionario.
+  Este fichero define la estructura que deben mapear las clases Java con JAXB.
+-->
+<concesionario-de-coches>
+    <listado-coches>
+        <!-- Un coche. El 'id' es un atributo, no un elemento. -->
+        <coche id="1">
+            <!-- La matrícula es el identificador único de negocio. El nombre del tag no coincide con el de un atributo Java estándar. -->
+            <matricula-coche>1234ABC</matricula-coche>
+            <marca>Renault</marca>
+            <modelo>Clio</modelo>
+            <!-- El equipamiento es una lista de elementos simples. -->
+            <equipamiento>
+                <extra>Climatizador</extra>
+                <extra>Navegador GPS</extra>
+                <extra>Techo solar</extra>
+            </equipamiento>
+        </coche>
+
+        <coche id="2">
+            <matricula-coche>5678DEF</matricula-coche>
+            <marca>Ford</marca>
+            <modelo>Focus</modelo>
+            <equipamiento>
+                <extra>Llantas de aleación</extra>
+                <extra>Sensor de aparcamiento</extra>
+            </equipamiento>
+        </coche>
+
+         <coche id="3">
+            <matricula-coche>9012GHI</matricula-coche>
+            <marca>Volkswagen</marca>
+            <modelo>Golf</modelo>
+            <equipamiento/> <!-- Este coche no tiene extras, hay que controlar listas vacías. -->
+        </coche>
+    </listado-coches>
+</concesionario-de-coches>
+
