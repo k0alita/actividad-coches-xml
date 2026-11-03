@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<concesionario-de-coches>
+    <listado-coches>
+        <coche id="1" marca="Seat">
+            <matricula-coche>3456JKL</matricula-coche>
+            <modelo>Ibiza</modelo>
+            <equipamiento>
+                <extra>Climatizador</extra>
+                <extra>Sensor de aparcamiento</extra>
+            </equipamiento>
+        </coche>
+        <coche id="2" marca="Peugeot">
+            <matricula-coche>7890MNP</matricula-coche>
+            <modelo>208</modelo>
+            <equipamiento>
+                <extra>Navegador GPS</extra>
+            </equipamiento>
+        </coche>
+        <coche id="3" marca="Toyota">
+            <matricula-coche>1122QRS</matricula-coche>
+            <modelo>Yaris</modelo>
+            <equipamiento>
+                <extra>Llantas de aleación</extra>
+                <extra>Techo solar</extra>
+                <extra>Cámara trasera</extra>
+            </equipamiento>
+        </coche>
+    </listado-coches>
+</concesionario-de-coches>

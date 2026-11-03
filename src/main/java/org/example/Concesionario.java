@@ -8,12 +8,12 @@ import java.util.List;
 @XmlRootElement(name = "concesionario-de-coches")
 @XmlAccessorType(XmlAccessType.FIELD)
 
-public class Concencionario {
+public class Concesionario {
     @XmlElementWrapper(name = "listado-coches")
     @XmlElement(name = "coche")
     private List<Coche> coches = new ArrayList<>();
 
-    public Concencionario() {
+    public Concesionario() {
 
     }
 

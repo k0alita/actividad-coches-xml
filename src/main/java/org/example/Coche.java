@@ -79,4 +79,11 @@ public class Coche {
     public void setId(int id) {
         this.id = id;
     }
+
+    @Override
+    public String toString() {
+        return "ID: " + id + " | Matrícula: " + matricula
+                + " | Marca: " + marca + " | Modelo: " + modelo
+                + " | Extras: " + getExtras();
+    }
 }
