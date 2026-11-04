@@ -10,21 +10,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
-/**
- * Punto de entrada y menú de texto de la aplicación.
- */
 public class Main {
 
     static Scanner sc = new Scanner(System.in);
 
-    /**
-     * Inicia la aplicación.
-     *
-     * @param args argumentos de consola, no utilizados
-     */
     public static void main(String[] args) {
         try {
+            // Carga la configuracion y datos del concesionario
             GestorConcesionario gestor = new GestorConcesionario();
+            // Inicia el menu
             ejecutarMenu(gestor);
         } catch (IOException e) {
             System.err.println("Error de lectura/escritura o configuración: " + e.getMessage());
@@ -59,7 +53,9 @@ public class Main {
                     case "7" -> importarJson(gestor);
                     case "8" -> informe(gestor);
                     case "9" -> mostrarCoches(gestor);
+
                     case "0" -> continuar = false;
+
                     default -> System.out.println("Opción no válida.");
                 }
             } catch (NoSuchFileException e) {
@@ -78,6 +74,9 @@ public class Main {
         System.out.println("Programa finalizado.");
     }
 
+    /**
+     * Muestra las opciones disponibles del menú principal.
+     */
     private static void mostrarMenu() {
         System.out.println("""
                 
@@ -95,6 +94,12 @@ public class Main {
                 """);
     }
 
+    /**
+     * Solicita los datos del coche para insertarlo
+     *
+     * @param gestor gestor encargado de insertar el coche
+     * @throws JAXBException si falla al guardarlo
+     */
     private static void insertarCoche(GestorConcesionario gestor)
             throws JAXBException {
         Coche coche = leerCoche();
@@ -105,19 +110,36 @@ public class Main {
         }
     }
 
+    /**
+     * Solicita los datos del coche para crearlo
+     * @return devulve un coche construido con todos los datos
+     */
     private static Coche leerCoche() {
         String matricula = leer("Matrícula: ");
         String marca = leer("Marca: ");
         String modelo = leer("Modelo: ");
         List<String> extras = leerExtras("Extras separados por | (vacío si no tiene): ");
+
+        // Id provisional
         return new Coche(0, matricula, marca, modelo, extras);
     }
 
+    /**
+     * Solicita al gestor que ordene los coches
+     * @param gestor gestor encargado de ordenar el coche y guardar los coches
+     * @throws JAXBException si falla al guardarlo
+     */
     private static void ordenar(GestorConcesionario gestor) throws JAXBException {
         gestor.ordenar();
         System.out.println("Coches ordenados y guardados en XML.");
     }
 
+    /**
+     * Solicita una matrícula e intenta borrar el coche correspondiente.
+     *
+     * @param gestor gestor encargado de buscar y borrar el coche
+     * @throws JAXBException si falla el guardado
+     */
     private static void borrar(GestorConcesionario gestor) throws JAXBException {
         String matricula = leer("Matrícula a borrar: ");
         System.out.println(gestor.borrar(matricula)
@@ -125,6 +147,12 @@ public class Main {
                 : "No se encontró esa matrícula.");
     }
 
+    /**
+     * Solicita la matrícula de un coche y los nuevos datos.
+     *
+     * @param gestor gestor encargado de modificar el coche
+     * @throws JAXBException si falla al guardarlo
+     */
     private static void modificar(GestorConcesionario gestor) throws JAXBException {
         String matricula = leer("Matrícula del coche que quieres modificar: ");
         String marca = leer("Nueva marca: ");
@@ -136,6 +164,13 @@ public class Main {
                 : "No se encontró esa matrícula.");
     }
 
+    /**
+     * Muestra el submenú de exportación JSON.
+     * Permite exportar el concesionario completo o un coche por matrícula.
+     *
+     * @param gestor gestor encargado de escribir los archivos
+     * @throws IOException si falla la escritura del archivo
+     */
     private static void exportarJson(GestorConcesionario gestor) throws IOException {
         System.out.println("1. Exportar todo el concesionario");
         System.out.println("2. Exportar un coche por matrícula");
@@ -152,6 +187,14 @@ public class Main {
         }
     }
 
+    /**
+     * Muestra el submenú de importación JSON.
+     * Permite reemplazar el concesionario completo o añadir un coche.
+     *
+     * @param gestor gestor encargado de leer y guardar
+     * @throws IOException si falla la lectura
+     * @throws JAXBException si falla el guardado
+     */
     private static void importarJson(GestorConcesionario gestor)
             throws IOException, JAXBException {
         System.out.println("El fichero de importación configurado es: json.import.path");
@@ -160,9 +203,11 @@ public class Main {
         String opcion = leer("Opción: ");
 
         if (opcion.equals("1")) {
+            // Intenta sustituir los datos actuales por el json
             gestor.importarConcesionarioJson();
             System.out.println("Base de datos reemplazada y guardada en XML.");
         } else if (opcion.equals("2")) {
+            // Intenta añadir un coche a los datos actuales
             gestor.importarCocheJson();
             System.out.println("Coche importado y guardado en XML.");
         } else {
@@ -170,19 +215,34 @@ public class Main {
         }
     }
 
+    /**
+     * Genera un informe con los datos del concesionario.
+     * @param gestor gestor encargado de leer y guardar
+     * @throws IOException si falla la lectura
+     */
     private static void informe(GestorConcesionario gestor) throws IOException {
         gestor.generarInforme();
         System.out.println("Informe generado en la ruta configurada.");
     }
 
+    /**
+     * Muestra los coches del concesionario.
+     * @param gestor gestor encargado de leer y guardar
+     */
     private static void mostrarCoches(GestorConcesionario gestor) {
         if (gestor.getConcesionario().getCoches().isEmpty()) {
             System.out.println("El concesionario está vacío.");
             return;
         }
+        //Imprime cada coche usando el toString()
         gestor.getConcesionario().getCoches().forEach(System.out::println);
     }
 
+    /**
+     * Lee una lista de extras separados por el caracter indicado.
+     * @param mensaje mensaje a mostrar al usuario
+     * @return lista de extras
+     */
     private static List<String> leerExtras(String mensaje) {
         String texto = leer(mensaje);
         List<String> extras = new ArrayList<>();
