@@ -9,13 +9,6 @@
                 <extra>Sensor de aparcamiento</extra>
             </equipamiento>
         </coche>
-        <coche id="2" marca="Peugeot">
-            <matricula-coche>7890MNP</matricula-coche>
-            <modelo>208</modelo>
-            <equipamiento>
-                <extra>Navegador GPS</extra>
-            </equipamiento>
-        </coche>
         <coche id="3" marca="Toyota">
             <matricula-coche>1122QRS</matricula-coche>
             <modelo>Yaris</modelo>

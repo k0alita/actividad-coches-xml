@@ -6,9 +6,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -38,7 +36,7 @@ public class Main {
             System.err.println("El XML no es válido: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.err.println("Datos inválidos: " + e.getMessage());
-        } catch (IllegalStateException | ParseException e) {
+        } catch (IllegalStateException e) {
             System.err.println("Configuración incorrecta: " + e.getMessage());
         }
     }
@@ -52,7 +50,7 @@ public class Main {
 
             try {
                 switch (opcion) {
-                    case "1" -> importarCsv(gestor);
+                    case "1" -> gestor.importarCsv();
                     case "2" -> insertarCoche(gestor);
                     case "3" -> ordenar(gestor);
                     case "4" -> borrar(gestor);
@@ -95,11 +93,6 @@ public class Main {
                 9. Mostrar coches
                 0. Salir
                 """);
-    }
-
-    private static void importarCsv(GestorConcesionario gestor)
-            throws IOException, JAXBException {
-        gestor.importarCsv();
     }
 
     private static void insertarCoche(GestorConcesionario gestor)
@@ -192,13 +185,15 @@ public class Main {
 
     private static List<String> leerExtras(String mensaje) {
         String texto = leer(mensaje);
-        if (texto.isBlank()) {
-            return new ArrayList<>();
+        List<String> extras = new ArrayList<>();
+
+        for (String extra : texto.split("\\|")) {
+            extra = extra.trim();
+            if (!extra.isEmpty()) {
+                extras.add(extra);
+            }
         }
-        return Arrays.stream(texto.split("\\|"))
-                .map(String::trim)
-                .filter(s -> !s.isEmpty())
-                .toList();
+        return extras;
     }
 
     private static String leer(String mensaje) {

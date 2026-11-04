@@ -13,10 +13,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.text.ParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -25,6 +23,7 @@ public class GestorConcesionario {
     private final ObjectMapper json = new ObjectMapper()
             .enable(SerializationFeature.INDENT_OUTPUT);
     private final Path xmlPath;
+    private final JAXBContext contextoXml;
     private Concesionario concesionario;
 
     /**
@@ -36,7 +35,7 @@ public class GestorConcesionario {
      * @throws SAXException si el XML no es válido
      */
 
-    public GestorConcesionario() throws IOException, JAXBException, ParseException, SAXException, ParserConfigurationException {
+    public GestorConcesionario() throws IOException, JAXBException, SAXException, ParserConfigurationException {
         try (InputStream input = GestorConcesionario.class
                 .getClassLoader()
                 .getResourceAsStream("config.properties")) {
@@ -49,10 +48,12 @@ public class GestorConcesionario {
             config.load(input);
         }
 
+        contextoXml = JAXBContext.newInstance(Concesionario.class);
+
         xmlPath = path("xml.path");
         crearCarpeta(xmlPath);
 
-        if (Files.notExists(xmlPath)) {
+        if (Files.exists(xmlPath)) {
             concesionario = leerXml(xmlPath);
         } else {
             concesionario = new Concesionario();
@@ -63,6 +64,12 @@ public class GestorConcesionario {
         normalizarIds();
 
     }
+
+    /**
+     * Obtiene el concesionario cargado en memoria.
+     *
+     * @return concesionario actual
+     */
     public Concesionario getConcesionario() {
         return concesionario;
     }
@@ -107,15 +114,26 @@ public class GestorConcesionario {
                     continue;
                 }
 
-                List<String> extras = Arrays.stream(campos[3].split("\\|"))
-                        .map(String::trim)
-                        .filter(s -> !s.isEmpty())
-                        .collect(Collectors.toCollection(ArrayList::new));
+                List<String> extras = new ArrayList<>();
 
-                Coche coche = new Coche(siguenteId(), matricula, campos[1].trim(), campos[2].trim(), extras);
-                validarCoche(coche);
-                concesionario.getCoches().add(coche);
-                importados++;
+                for (String extra : campos[3].split("\\|")) {
+                    extra = extra.trim();
+
+                    if (!extra.isEmpty()) {
+                        extras.add(extra);
+                    }
+                }
+
+                Coche coche = new Coche(siguenteId(), matricula,
+                        campos[1].trim(), campos[2].trim(), extras);
+
+                try {
+                    validarCoche(coche);
+                    concesionario.getCoches().add(coche);
+                    importados++;
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Fila ignorada: " + e.getMessage());
+                }
             }
         }
 
@@ -178,25 +196,41 @@ public class GestorConcesionario {
     }
 
     /**
-     * Modifica marca, modelo y extras sin cambiar la matrícula.
+     * Modifica los datos de un coche sin cambiar su matrícula ni su ID.
      *
-     * @param matricula matrícula del registro que se modificará
+     * @param matricula matrícula del coche
      * @param marca nueva marca
      * @param modelo nuevo modelo
      * @param extras nuevos extras
-     * @return true si se encontró y modificó el coche
-     * @throws JAXBException si falla la persistencia XML
+     * @return true si se encontró el coche; false si no existe
+     * @throws IllegalArgumentException si los datos son inválidos
+     * @throws JAXBException si falla el guardado XML
      */
 
-    public boolean modificar(String matricula, String marca, String modelo, List<String> extras) throws JAXBException {
+    public boolean modificar(String matricula, String marca, String modelo,
+                             List<String> extras) throws JAXBException {
+
         Coche coche = buscar(matricula);
+
         if (coche == null) {
             return false;
         }
-        coche.setMarca(limpiar(marca));
-        coche.setModelo(limpiar(modelo));
-        coche.setExtras(extras);
-        validarCoche(coche);
+
+        // Comprueba los datos sin modificar el registro original.
+        Coche candidato = new Coche(
+                coche.getId(),
+                coche.getMatricula(),
+                marca,
+                modelo,
+                extras
+        );
+
+        validarCoche(candidato);
+
+        coche.setMarca(candidato.getMarca());
+        coche.setModelo(candidato.getModelo());
+        coche.setExtras(candidato.getExtras());
+
         guardarXml();
         return true;
     }
@@ -218,12 +252,13 @@ public class GestorConcesionario {
      *
      * @param matricula matrícula buscada
      * @throws IOException si falla la escritura JSON
-     * @throws NoSuchFileException si no existe el coche
+     * @throws IllegalArgumentException si no existe el coche
      */
     public void exportarCocheJson(String matricula) throws IOException {
         Coche coche = buscar(matricula);
         if (coche == null) {
-            throw new NoSuchFileException("No existe la matrícula " + matricula);
+            throw new IllegalArgumentException(
+                    "No existe un coche con matrícula " + matricula);
         }
 
         Path destino = path("json.coche.path");
@@ -238,9 +273,18 @@ public class GestorConcesionario {
      * @throws JAXBException si falla la escritura XML
      */
     public void importarConcesionarioJson() throws IOException, JAXBException {
-        Concesionario nuevo = json.readValue(path("json.import.path").toFile(),
-                Concesionario.class);
+        Concesionario nuevo = json.readValue(
+                path("json.import.path").toFile(),
+                Concesionario.class
+        );
+
+        if (nuevo == null) {
+            throw new IllegalArgumentException(
+                    "El JSON debe contener un concesionario, no null.");
+        }
+
         validarMatriculas(nuevo.getCoches());
+
         concesionario = nuevo;
         normalizarIds();
         guardarXml();
@@ -315,38 +359,76 @@ public class GestorConcesionario {
         if (matricula == null) {
             return null;
         }
-        return concesionario.getCoches().stream()
-                .filter(c -> c.getMatricula().equalsIgnoreCase(matricula.trim()))
-                .findFirst().orElse(null);
+
+        matricula = matricula.trim();
+
+        for (Coche coche : concesionario.getCoches()) {
+            if (coche.getMatricula().equalsIgnoreCase(matricula)) {
+                return coche;
+            }
+        }
+
+        return null;
     }
 
     private void validarCoche(Coche coche) {
         if (coche == null) {
-            throw new IllegalArgumentException("El coche no puede ser nulo");
+            throw new IllegalArgumentException("El coche no puede ser nulo.");
         }
 
         coche.setMatricula(limpiar(coche.getMatricula()));
         coche.setMarca(limpiar(coche.getMarca()));
         coche.setModelo(limpiar(coche.getModelo()));
 
-        if (coche.getMatricula().isEmpty() || coche.getMarca().isEmpty() || coche.getModelo().isEmpty()) {
-            throw new IllegalArgumentException("La matricula, marca y modelo no pueden estar vacios");
+        if (coche.getMatricula().isEmpty()
+                || coche.getMarca().isEmpty()
+                || coche.getModelo().isEmpty()) {
+
+            throw new IllegalArgumentException(
+                    "La matrícula, marca y modelo no pueden estar vacíos.");
         }
 
+        List<String> extrasLimpios = new ArrayList<>();
+
+        for (String extra : coche.getExtras()) {
+            if (extra == null) {
+                throw new IllegalArgumentException(
+                        "Los extras no pueden contener valores nulos.");
+            }
+
+            extra = extra.trim();
+
+            if (!extra.isEmpty()) {
+                extrasLimpios.add(extra);
+            }
+        }
+
+        coche.setExtras(extrasLimpios);
     }
 
     private void validarMatriculas(List<Coche> coches) {
         Set<String> matriculas = new HashSet<>();
+
         for (Coche coche : coches) {
+            validarCoche(coche);
+
             String matricula = coche.getMatricula().toUpperCase(Locale.ROOT);
+
             if (!matriculas.add(matricula)) {
-                throw new IllegalArgumentException("La matricula: " + coche.getMatricula() + " ya existe");
+                throw new IllegalArgumentException(
+                        "La matrícula " + coche.getMatricula() + " ya existe.");
             }
         }
     }
 
     private int siguenteId() {
-        return concesionario.getCoches().stream().mapToInt(Coche::getId).max().orElse(0) + 1;
+        int mayorId = 0;
+        for (Coche coche : concesionario.getCoches()) {
+            if (coche.getId() > mayorId) {
+                mayorId = coche.getId();
+            }
+        }
+        return mayorId + 1;
     }
 
     private void normalizarIds() {
@@ -362,7 +444,7 @@ public class GestorConcesionario {
 
     private Path path(String clave) {
         String valor = config.getProperty(clave);
-        if (valor == null || valor.isEmpty()) {
+        if (valor == null || valor.isBlank()) {
             throw new IllegalStateException("La clave " + clave + " no tiene valor");
         }
         return Paths.get(valor.trim());
@@ -376,8 +458,7 @@ public class GestorConcesionario {
     }
 
     private Concesionario leerXml(Path fichero) throws JAXBException, IOException, ParserConfigurationException, SAXException {
-        JAXBContext context = JAXBContext.newInstance(Concesionario.class);
-        Unmarshaller unmarshaller = context.createUnmarshaller();
+        Unmarshaller unmarshaller = contextoXml.createUnmarshaller();
 
         var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -397,8 +478,7 @@ public class GestorConcesionario {
     private void guardarXml() throws JAXBException {
         try {
             crearCarpeta(xmlPath);
-            JAXBContext context = JAXBContext.newInstance(Concesionario.class);
-            Marshaller marshaller = context.createMarshaller();
+            Marshaller marshaller = contextoXml.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
             marshaller.setProperty(Marshaller.JAXB_ENCODING, "UTF-8");
             marshaller.marshal(concesionario, xmlPath.toFile());
