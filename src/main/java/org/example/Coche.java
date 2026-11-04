@@ -15,12 +15,13 @@ public class Coche {
     @XmlElement(name = "matricula-coche", required = true)
     private String matricula;
 
-    @XmlAttribute(name = "marca", required = true)
+    @XmlElement(name = "marca", required = true)
     private String marca;
 
     @XmlElement(name = "modelo", required = true)
     private String modelo;
 
+    // Agrupa los extras dentro del elemento <equipamiento>.
     @XmlElementWrapper(name = "equipamiento")
     @XmlElement(name = "extra")
     private List<String> extras = new ArrayList<>();
@@ -29,14 +30,25 @@ public class Coche {
 
     }
 
+    /**
+     * Constructor principal para la creacion de un coche.
+     *
+     * @param id identificador del coche
+     * @param matricula matrícula del coche
+     * @param marca marca del coche
+     * @param modelo modelo del coche
+     * @param extras extras del coche
+     */
     public Coche(int id, String matricula, String marca, String modelo, List<String>extras){
         this.id = id;
         this.matricula = matricula;
         this.marca = marca;
         this.modelo = modelo;
+        // Crea una copia de la lista recibida o una vacía si recibe null.
         this.extras = extras == null ? new ArrayList<>() : new ArrayList<>(extras);
     }
 
+    // Getter para obtener la lista de extras
     public List<String> getExtras() {
         if (extras == null) {
             return new ArrayList<>();
@@ -80,6 +92,11 @@ public class Coche {
         this.id = id;
     }
 
+    /**
+     * Devuelve los datos del coche como texto para mostrarlos por consola.
+     *
+     * @return texto con el ID, matrícula, marca, modelo y extras
+     */
     @Override
     public String toString() {
         return "ID: " + id + " | Matrícula: " + matricula

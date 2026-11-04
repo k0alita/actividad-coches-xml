@@ -24,10 +24,6 @@ public class Main {
             System.err.println("Error de lectura/escritura o configuración: " + e.getMessage());
         } catch (JAXBException e) {
             System.err.println("Error de mapeo XML/JAXB: " + e.getMessage());
-        } catch (ParserConfigurationException e) {
-            System.err.println("Error al configurar el parser XML: " + e.getMessage());
-        } catch (SAXException e) {
-            System.err.println("El XML no es válido: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             System.err.println("Datos inválidos: " + e.getMessage());
         } catch (IllegalStateException e) {
