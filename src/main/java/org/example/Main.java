@@ -15,7 +15,7 @@ import java.util.Scanner;
  */
 public class Main {
 
-    private static final Scanner SCANNER = new Scanner(System.in);
+    static Scanner sc = new Scanner(System.in);
 
     /**
      * Inicia la aplicación.
@@ -198,6 +198,6 @@ public class Main {
 
     private static String leer(String mensaje) {
         System.out.print(mensaje);
-        return SCANNER.nextLine().trim();
+        return sc.nextLine().trim();
     }
 }

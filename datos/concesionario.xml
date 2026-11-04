@@ -9,7 +9,7 @@
                 <extra>Sensor de aparcamiento</extra>
             </equipamiento>
         </coche>
-        <coche id="3" marca="Toyota">
+        <coche id="2" marca="Toyota">
             <matricula-coche>1122QRS</matricula-coche>
             <modelo>Yaris</modelo>
             <equipamiento>
@@ -17,6 +17,18 @@
                 <extra>Techo solar</extra>
                 <extra>Cámara trasera</extra>
             </equipamiento>
+        </coche>
+        <coche id="3" marca="Peugeot">
+            <matricula-coche>3462GHM</matricula-coche>
+            <modelo>3008</modelo>
+            <equipamiento>
+                <extra>Calefaccion</extra>
+            </equipamiento>
+        </coche>
+        <coche id="4" marca="BYD">
+            <matricula-coche>4362FTG</matricula-coche>
+            <modelo>Lion</modelo>
+            <equipamiento/>
         </coche>
     </listado-coches>
 </concesionario-de-coches>

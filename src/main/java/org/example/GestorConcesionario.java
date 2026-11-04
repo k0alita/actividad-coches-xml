@@ -8,7 +8,6 @@ import jakarta.xml.bind.Marshaller;
 import jakarta.xml.bind.Unmarshaller;
 import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -20,8 +19,7 @@ import java.util.stream.Collectors;
 
 public class GestorConcesionario {
     private final Properties config = new Properties();
-    private final ObjectMapper json = new ObjectMapper()
-            .enable(SerializationFeature.INDENT_OUTPUT);
+    private final ObjectMapper json = new ObjectMapper();
     private final Path xmlPath;
     private final JAXBContext contextoXml;
     private Concesionario concesionario;
@@ -49,6 +47,8 @@ public class GestorConcesionario {
         }
 
         contextoXml = JAXBContext.newInstance(Concesionario.class);
+        json.enable(SerializationFeature.INDENT_OUTPUT);
+
 
         xmlPath = path("xml.path");
         crearCarpeta(xmlPath);
@@ -457,22 +457,9 @@ public class GestorConcesionario {
         }
     }
 
-    private Concesionario leerXml(Path fichero) throws JAXBException, IOException, ParserConfigurationException, SAXException {
+    private Concesionario leerXml(Path fichero) throws JAXBException {
         Unmarshaller unmarshaller = contextoXml.createUnmarshaller();
-
-        var factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
-        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-        factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
-        factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
-
-        var builder = factory.newDocumentBuilder();
-
-        try (InputStream input = Files.newInputStream(fichero)){
-            var document = builder.parse(input);
-            return (Concesionario) unmarshaller.unmarshal(document);
-        }
-
+        return (Concesionario) unmarshaller.unmarshal(fichero.toFile());
     }
 
     private void guardarXml() throws JAXBException {
